@@ -60,7 +60,7 @@ export default function SideNav({ userType, isExpanded, setIsExpanded } : {
               key={item.name}
               href={item.href}
               className={clsx(
-                'group flex items-center rounded-lg px-3 py-2 text-sm font-medium hover:bg-gray-700',
+                'group flex items-center rounded-lg px-3 py-2 text-lg font-medium hover:bg-gray-700',
                 {
                   'bg-gray-800 text-white': pathname === item.href,
                   'text-gray-300': pathname !== item.href,

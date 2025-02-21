@@ -23,212 +23,218 @@ enum QuestionType {
 // Models
 
 model UserProfile {
-  id                String            @id @db.Uuid           // Unique identifier
-  fullName          String            @map("full_name")      // User's full name
-  avatarUrl         String?           @map("avatar_url")     // Optional avatar URL
-  role              UserRole                                  // Role (student or teacher)
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz  // Last update timestamp
+  id        String   @id @db.Uuid // Unique identifier
+  fullName  String   @map("full_name") // User's full name
+  avatarUrl String?  @map("avatar_url") // Optional avatar URL
+  role      UserRole // Role (student or teacher)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  taughtClasses     Class[]           @relation("TeacherClasses")   // Classes taught by the teacher
-  enrollments       ClassEnrollment[]                            // Classes the student is enrolled in
-  attendance        ClassAttendance[]                            // Attendance records
-  uploadedMaterials Material[]                                   // Materials uploaded by the user
-  createdQuizzes    Quiz[]                                       // Quizzes created by the user
-  quizSubmissions   QuizSubmission[]                             // Quiz submissions by the student
-  chatHistory       ChatHistory[]                                // Chat interactions
-  progress          StudentProgress[]                            // Student's progress per topic
-  studyPlans        StudyPlan[]                                  // Study plans created by the student
+  taughtClasses     Class[]           @relation("TeacherClasses") // Classes taught by the teacher
+  enrollments       ClassEnrollment[] // Classes the student is enrolled in
+  attendance        ClassAttendance[] // Attendance records
+  uploadedMaterials Material[] // Materials uploaded by the user
+  createdQuizzes    Quiz[] // Quizzes created by the user
+  quizSubmissions   QuizSubmission[] // Quiz submissions by the student
+  chatHistory       ChatHistory[] // Chat interactions
+  progress          StudentProgress[] // Student's progress per topic
+  studyPlans        StudyPlan[] // Study plans created by the student
+  Debate            Debate[]
 
   @@map("user_profiles")
 }
 
 model Subject {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  name              String                                                       // Subject name (e.g., Mathematics, Science)
-  
+  id   String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  name String // Subject name (e.g., Mathematics, Science)
+
   // Relations
-  topics            Topic[]                                                      // Topics under this subject
-  classes           Class[]                                                      // Classes associated with this subject
+  topics  Topic[] // Topics under this subject
+  classes Class[] // Classes associated with this subject
 
   // Purpose: Organizes subjects to structure the syllabus and associate topics and classes.
   @@map("subjects")
 }
 
 model Topic {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  subjectId         String            @db.Uuid                                          // Foreign key to Subject
-  name              String                                                       // Topic name (e.g., Algebra, Photosynthesis)
-  sequenceNumber    Int                                                          // Order of topics within the subject for recommendations
-  
+  id             String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  subjectId      String @db.Uuid // Foreign key to Subject
+  name           String // Topic name (e.g., Algebra, Photosynthesis)
+  sequenceNumber Int // Order of topics within the subject for recommendations
+
   // Relations
-  subject           Subject           @relation(fields: [subjectId], references: [id])  // Parent subject
-  questions         QuizQuestion[]                                              // Questions associated with this topic
-  progress          StudentProgress[]                                           // Student progress for this topic
-  studyPlanTopics   StudyPlanTopic[]                                            // Study plans including this topic
+  subject         Subject           @relation(fields: [subjectId], references: [id]) // Parent subject
+  questions       QuizQuestion[] // Questions associated with this topic
+  progress        StudentProgress[] // Student progress for this topic
+  studyPlanTopics StudyPlanTopic[] // Study plans including this topic
+  Material        Material[]
 
   // Purpose: Represents topics within subjects, enables content recommendations based on sequence, and associates questions and progress.
   @@map("topics")
-  Material Material[]
 }
 
 model Class {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  teacherId         String            @map("teacher_id") @db.Uuid                       // Foreign key to UserProfile (teacher)
-  title             String                                                       // Class title
-  description       String?                                                      // Optional description
-  subjectId         String            @db.Uuid                                          // Foreign key to Subject (replaces subject string)
-  startTime         DateTime          @map("start_time") @db.Timestamptz                // Class start time
-  endTime           DateTime          @map("end_time") @db.Timestamptz                  // Class end time
-  isLive            Boolean           @default(false) @map("is_live")                   // Indicates if it's live
-  recordingUrl      String?           @map("recording_url")                             // Optional recording URL
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz  // Last update timestamp
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  teacherId    String   @map("teacher_id") @db.Uuid // Foreign key to UserProfile (teacher)
+  title        String // Class title
+  description  String? // Optional description
+  subjectId    String   @db.Uuid // Foreign key to Subject (replaces subject string)
+  startTime    DateTime @map("start_time") @db.Timestamptz // Class start time
+  endTime      DateTime @map("end_time") @db.Timestamptz // Class end time
+  isLive       Boolean  @default(false) @map("is_live") // Indicates if it's live
+  recordingUrl String?  @map("recording_url") // Optional recording URL
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  teacher           UserProfile       @relation("TeacherClasses", fields: [teacherId], references: [id])  // Teacher of the class
-  subject           Subject           @relation(fields: [subjectId], references: [id])                    // Subject of the class
-  enrollments       ClassEnrollment[]                                                           // Enrollments in this class
-  attendance        ClassAttendance[]                                                           // Attendance records
-  materials         Material[]                                                                  // Materials for this class
-  quizzes           Quiz[]                                                                      // Quizzes for this class
+  teacher     UserProfile       @relation("TeacherClasses", fields: [teacherId], references: [id]) // Teacher of the class
+  subject     Subject           @relation(fields: [subjectId], references: [id]) // Subject of the class
+  enrollments ClassEnrollment[] // Enrollments in this class
+  attendance  ClassAttendance[] // Attendance records
+  materials   Material[] // Materials for this class
+  quizzes     Quiz[] // Quizzes for this class
 
   // Modification: Replaced subject String with subjectId to reference Subject model for better structure.
   @@map("classes")
 }
 
 model ClassEnrollment {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  classId           String            @map("class_id") @db.Uuid                       // Foreign key to Class
-  studentId         String            @map("student_id") @db.Uuid                     // Foreign key to UserProfile (student)
-  joinedAt          DateTime          @default(now()) @map("joined_at") @db.Timestamptz  // Enrollment timestamp
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  classId   String   @map("class_id") @db.Uuid // Foreign key to Class
+  studentId String   @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  joinedAt  DateTime @default(now()) @map("joined_at") @db.Timestamptz // Enrollment timestamp
 
   // Relations
-  class             Class             @relation(fields: [classId], references: [id], onDelete: Cascade)  // Associated class
-  student           UserProfile       @relation(fields: [studentId], references: [id])                   // Enrolled student
+  class   Class       @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
+  student UserProfile @relation(fields: [studentId], references: [id]) // Enrolled student
 
   @@unique([classId, studentId])
   @@map("class_enrollments")
 }
 
 model ClassAttendance {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  classId           String            @map("class_id") @db.Uuid                       // Foreign key to Class
-  studentId         String            @map("student_id") @db.Uuid                     // Foreign key to UserProfile (student)
-  joinTime          DateTime          @map("join_time") @db.Timestamptz               // Join time
-  leaveTime         DateTime?         @map("leave_time") @db.Timestamptz              // Optional leave time
-  durationMinutes   Int?              @map("duration_minutes")                        // Optional duration in minutes
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  classId         String    @map("class_id") @db.Uuid // Foreign key to Class
+  studentId       String    @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  joinTime        DateTime  @map("join_time") @db.Timestamptz // Join time
+  leaveTime       DateTime? @map("leave_time") @db.Timestamptz // Optional leave time
+  durationMinutes Int?      @map("duration_minutes") // Optional duration in minutes
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
 
   // Relations
-  class             Class             @relation(fields: [classId], references: [id], onDelete: Cascade)  // Associated class
-  student           UserProfile       @relation(fields: [studentId], references: [id])                   // Attending student
+  class   Class       @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
+  student UserProfile @relation(fields: [studentId], references: [id]) // Attending student
 
   @@map("class_attendance")
 }
 
 model Material {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  classId           String            @map("class_id") @db.Uuid                       // Foreign key to Class
-  title             String                                                       // Material title
-  description       String? 
-  fileUrl           String            @map("file_url")
-  fileType          String            @map("file_type")
-  uploadedBy        String            @map("uploaded_by") @db.Uuid
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
-  topicId           String?           @db.Uuid
-  topic             Topic?            @relation(fields: [topicId], references: [id])
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  classId     String   @map("class_id") @db.Uuid // Foreign key to Class
+  title       String // Material title
+  description String?
+  fileUrl     String   @map("file_url")
+  fileType    String   @map("file_type")
+  uploadedBy  String   @map("uploaded_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  topicId     String?  @db.Uuid
+  topic       Topic?   @relation(fields: [topicId], references: [id])
 
   // Relations
-  class             Class             @relation(fields: [classId], references: [id], onDelete: Cascade)  // Associated class
-  uploader          UserProfile       @relation(fields: [uploadedBy], references: [id])                  // User who uploaded
+  class    Class       @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
+  uploader UserProfile @relation(fields: [uploadedBy], references: [id]) // User who uploaded
 
   // Addition: Added optional topicId to associate materials with specific topics for content recommendations.
   @@map("materials")
 }
 
 model Quiz {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  classId           String            @map("class_id") @db.Uuid                       // Foreign key to Class
-  title             String                                                       // Quiz title
-  description       String?                                                      // Optional description
-  durationMinutes   Int?              @map("duration_minutes")                      // Optional duration in minutes
-  isAiGenerated     Boolean           @default(false) @map("is_ai_generated")       // Indicates if AI-generated
-  createdBy         String            @map("created_by") @db.Uuid                   // Foreign key to UserProfile (creator)
-  startTime         DateTime?         @map("start_time") @db.Timestamptz            // Optional start time
-  endTime           DateTime?         @map("end_time") @db.Timestamptz              // Optional end time
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz  // Last update timestamp
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  classId         String    @map("class_id") @db.Uuid // Foreign key to Class
+  title           String // Quiz title
+  description     String? // Optional description
+  durationMinutes Int?      @map("duration_minutes") // Optional duration in minutes
+  isAiGenerated   Boolean   @default(false) @map("is_ai_generated") // Indicates if AI-generated
+  createdBy       String    @map("created_by") @db.Uuid // Foreign key to UserProfile (creator)
+  startTime       DateTime? @map("start_time") @db.Timestamptz // Optional start time
+  endTime         DateTime? @map("end_time") @db.Timestamptz // Optional end time
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  class             Class             @relation(fields: [classId], references: [id], onDelete: Cascade)  // Associated class
-  creator           UserProfile       @relation(fields: [createdBy], references: [id])                   // Quiz creator
-  questions         QuizQuestion[]                                                              // Questions in the quiz
-  submissions       QuizSubmission[]                                                            // Submissions for the quiz
+  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
+  creator     UserProfile      @relation(fields: [createdBy], references: [id]) // Quiz creator
+  questions   QuizQuestion[] // Questions in the quiz
+  submissions QuizSubmission[] // Submissions for the quiz
 
   @@map("quizzes")
 }
 
 model QuizQuestion {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  quizId            String            @map("quiz_id") @db.Uuid                       // Foreign key to Quiz
-  questionText      String            @map("question_text")                          // Question text
-  questionType      QuestionType      @map("question_type")                          // Type of question
-  correctAnswer     String            @map("correct_answer")                         // Correct answer
-  options           Json?                                                      // Optional options (JSON)
-  points            Int               @default(1)                                    // Points for the question
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  topicId           String            @db.Uuid                                          // Foreign key to Topic
-  difficulty        Int               @default(1)                                       // Difficulty level (1 to 10)
-  topic             Topic             @relation(fields: [topicId], references: [id])    // Associated topic
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  quizId        String       @map("quiz_id") @db.Uuid // Foreign key to Quiz
+  questionText  String       @map("question_text") // Question text
+  questionType  QuestionType @map("question_type") // Type of question
+  correctAnswer String       @map("correct_answer") // Correct answer
+  options       Json? // Optional options (JSON)
+  points        Int          @default(1) // Points for the question
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  topicId       String       @db.Uuid // Foreign key to Topic
+  difficulty    Int          @default(1) // Difficulty level (1 to 10)
+  topic         Topic        @relation(fields: [topicId], references: [id]) // Associated topic
 
+<<<<<<< HEAD
   quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
+=======
+  // Relations
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade) // Associated quiz
+>>>>>>> 69c5548587f9fe95ac921fd523bb0a642f76e585
 
   @@map("quiz_questions")
 }
 
 model QuizSubmission {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  quizId            String            @map("quiz_id") @db.Uuid                       // Foreign key to Quiz
-  studentId         String            @map("student_id") @db.Uuid                     // Foreign key to UserProfile (student)
-  score             Float?                                                     // Score obtained
-  submittedAt       DateTime          @default(now()) @map("submitted_at") @db.Timestamptz  // Submission timestamp
-  answers           Json                                                       // Answers submitted (JSON)
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  quizId      String   @map("quiz_id") @db.Uuid // Foreign key to Quiz
+  studentId   String   @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  score       Float? // Score obtained
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz // Submission timestamp
+  answers     Json // Answers submitted (JSON)
 
   // Relations
-  quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)  // Associated quiz
-  student           UserProfile       @relation(fields: [studentId], references: [id])                   // Submitting student
+  quiz    Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade) // Associated quiz
+  student UserProfile @relation(fields: [studentId], references: [id]) // Submitting student
 
   @@unique([quizId, studentId])
   @@map("quiz_submissions")
 }
 
 model ChatHistory {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  userId            String            @map("user_id") @db.Uuid                       // Foreign key to UserProfile
-  message           String                                                       // Chat message
-  isAi              Boolean           @default(false) @map("is_ai")                // Indicates if AI-generated
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  userId    String   @map("user_id") @db.Uuid // Foreign key to UserProfile
+  message   String // Chat message
+  isAi      Boolean  @default(false) @map("is_ai") // Indicates if AI-generated
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
 
   // Relations
-  user              UserProfile       @relation(fields: [userId], references: [id])  // Associated user
+  user UserProfile @relation(fields: [userId], references: [id]) // Associated user
 
   @@map("chat_history")
 }
 
 model StudentProgress {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  studentId         String            @map("student_id") @db.Uuid                     // Foreign key to UserProfile (student)
-  topicId           String            @db.Uuid                                          // Foreign key to Topic
-  proficiencyLevel  Int               @default(0) @map("proficiency_level") @db.Integer  // Proficiency level for the topic
-  lastActivity      DateTime          @default(now()) @map("last_activity") @db.Timestamptz  // Last activity timestamp
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz  // Last update timestamp
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  studentId        String   @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  topicId          String   @db.Uuid // Foreign key to Topic
+  proficiencyLevel Int      @default(0) @map("proficiency_level") @db.Integer // Proficiency level for the topic
+  lastActivity     DateTime @default(now()) @map("last_activity") @db.Timestamptz // Last activity timestamp
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  student           UserProfile       @relation(fields: [studentId], references: [id])  // Associated student
-  topic             Topic             @relation(fields: [topicId], references: [id])    // Associated topic
+  student UserProfile @relation(fields: [studentId], references: [id]) // Associated student
+  topic   Topic       @relation(fields: [topicId], references: [id]) // Associated topic
 
   @@unique([studentId, topicId])
   // Modification: Replaced subject and topic strings with topicId to reference Topic model for better structure.
@@ -237,19 +243,19 @@ model StudentProgress {
 }
 
 model StudyPlan {
-  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid  // Unique identifier
-  studentId         String            @map("student_id") @db.Uuid                     // Foreign key to UserProfile (student)
-  title             String                                                       // Study plan title
-  description       String?                                                      // Optional description
-  startDate         DateTime          @map("start_date") @db.Date                   // Start date
-  endDate           DateTime          @map("end_date") @db.Date                     // End date
-  goals             Json?                                                      // Optional goals (JSON)
-  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz  // Creation timestamp
-  updatedAt         DateTime          @default(now()) @map("updated_at") @db.Timestamptz  // Last update timestamp
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  studentId   String   @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  title       String // Study plan title
+  description String? // Optional description
+  startDate   DateTime @map("start_date") @db.Date // Start date
+  endDate     DateTime @map("end_date") @db.Date // End date
+  goals       Json? // Optional goals (JSON)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  student           UserProfile       @relation(fields: [studentId], references: [id])  // Associated student
-  studyPlanTopics   StudyPlanTopic[]                                             // Topics included in the study plan
+  student         UserProfile      @relation(fields: [studentId], references: [id]) // Associated student
+  studyPlanTopics StudyPlanTopic[] // Topics included in the study plan
 
   // Modification: Removed subjects Json and added relation to StudyPlanTopic for better structure.
   // Purpose: Defines study plans with associated topics for generating daily schedules.
@@ -257,14 +263,26 @@ model StudyPlan {
 }
 
 model StudyPlanTopic {
-  studyPlanId       String            @db.Uuid  // Foreign key to StudyPlan
-  topicId           String            @db.Uuid  // Foreign key to Topic
+  studyPlanId String @db.Uuid // Foreign key to StudyPlan
+  topicId     String @db.Uuid // Foreign key to Topic
 
   // Relations
-  studyPlan         StudyPlan         @relation(fields: [studyPlanId], references: [id])  // Associated study plan
-  topic             Topic             @relation(fields: [topicId], references: [id])      // Associated topic
+  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id]) // Associated study plan
+  topic     Topic     @relation(fields: [topicId], references: [id]) // Associated topic
 
   @@id([studyPlanId, topicId])
   // Purpose: Represents many-to-many relationship between StudyPlan and Topic for structured study planning.
   @@map("study_plan_topics")
+}
+
+//debate
+model Debate {
+  id        String      @id @default(uuid())
+  studentId String      @map("student_id") @db.Uuid
+  student   UserProfile @relation(fields: [studentId], references: [id]) // Associated student
+  topic      String
+  stance     String
+  cards      String[]
+  aiResponse String?
+  createdAt  DateTime @default(now())
 }

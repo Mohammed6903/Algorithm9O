@@ -55,8 +55,8 @@ export const studentNavItems = [
     icon: Clock
   },
   {
-    name:'Survey',
-    href:'/main/student/Survey',
+    name:'Debate',
+    href:'/main/student/Debate',
     icon: CheckCheck
   }
 ];
