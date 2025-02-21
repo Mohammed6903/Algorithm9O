@@ -1,4 +1,4 @@
-import { Home, Users, Calendar, BarChart2, Settings, LogOut, Notebook, Clock, CheckCheck } from 'lucide-react';
+import { Home, Users, Calendar, BarChart2, Settings, LogOut, Notebook, Clock, CheckCheck, LucideTableProperties, LucideListChecks } from 'lucide-react';
 import { list } from 'postcss';
 
 export const teacherNavItems = [
@@ -32,14 +32,14 @@ export const studentNavItems = [
     icon: Home
   },
   {
-    name: 'Classes',
+    name: 'Summary',
     href: '/main/student/classes',
-    icon: BarChart2
+    icon: LucideTableProperties
   },
   {
-    name: 'Classroom',
-    href: '/main/student/classroom',
-    icon: Users
+    name: 'Classes',
+    href: '/main/student/summary',
+    icon: BarChart2
   },
   {
     name: 'Guidance',
@@ -47,14 +47,14 @@ export const studentNavItems = [
     icon: Calendar
   },
   {
-    name:'Lecture',
-    href:'/main/student/Lecture',
-    icon: Notebook
-  },
-  {
     name:'Routine',
     href:'/main/student/Routine',
     icon: Clock
+  },
+  {
+    name:'Quiz',
+    href:'/main/student/quiz',
+    icon: LucideListChecks
   },
   {
     name:'Debate',

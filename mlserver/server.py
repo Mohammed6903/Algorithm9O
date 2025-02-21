@@ -12,6 +12,13 @@ from examPrepAssistant import ExamPrepAssistant
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from debate import Debate
+from QuizGenerator import StaticSyllabus, AISyllabusQuizGenerator, StudentIRT
+from RoutineGenerator import RoutineGenerator
+
+routine_generator = RoutineGenerator()
+
+student_irt = StudentIRT()
+syllabus = StaticSyllabus()
 
 app = FastAPI(title="Media Processing API")
 
@@ -437,24 +444,257 @@ async def get_assistance_result(task_id: str):
     
     return JSONResponse(content=task_info["result"])
 
+class QuizRequest(BaseModel):
+    subject: str
+    topic: Optional[str] = None
+
+class QuizResponse(BaseModel):
+    task_id: str
+    status: str
+    message: str
+
+class QuizResult(BaseModel):
+    quiz_id: str
+    score: float
+    total_marks: float
+    percentage: float
+    updated_ability: float
+    updated_level: str
+
+class ResponseSubmitRequest(BaseModel):
+    quiz_id: str
+    responses: Dict[str, str]
+
+syllabus = StaticSyllabus()
+quiz_generator = AISyllabusQuizGenerator(syllabus)
+
+@app.post("/generate-quiz", response_model=QuizResponse)
+async def generate_quiz_endpoint(
+    background_tasks: BackgroundTasks,
+    request: QuizRequest
+):
+    """Generate a quiz and return a task ID for tracking."""
+    task_id = str(uuid.uuid4())
+    active_tasks[task_id] = {"status": "processing"}
+
+    async def generate_quiz_task(task_id: str, subject: str, topic: Optional[str]):
+        try:
+            quiz = await quiz_generator.generate_quiz(subject, topic)
+            active_tasks[task_id] = {
+                "status": "completed",
+                "result": quiz
+            }
+        except Exception as e:
+            active_tasks[task_id] = {
+                "status": "failed",
+                "error": str(e)
+            }
+
+    background_tasks.add_task(generate_quiz_task, task_id, request.subject, request.topic)
+    
+    return QuizResponse(
+        task_id=task_id,
+        status="processing",
+        message="Quiz generation in progress"
+    )
+
+@app.get("/quiz-result/{task_id}")
+async def get_quiz_result(task_id: str):
+    """Retrieve the result of a quiz generation task."""
+    if task_id not in active_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task_info = active_tasks[task_id]
+    
+    if task_info["status"] == "failed":
+        raise HTTPException(
+            status_code=500,
+            detail=f"Task failed: {task_info.get('error', 'Unknown error')}"
+        )
+    
+    if task_info["status"] != "completed":
+        raise HTTPException(
+            status_code=202,
+            detail={"status": task_info["status"], "message": "Task is still processing"}
+        )
+    
+    return JSONResponse(content=task_info["result"])
+
+@app.post("/submit-quiz", response_model=QuizResponse)
+async def submit_quiz_endpoint(
+    background_tasks: BackgroundTasks,
+    request: ResponseSubmitRequest
+):
+    """Submit quiz responses for evaluation."""
+    task_id = str(uuid.uuid4())
+    active_tasks[task_id] = {"status": "processing"}
+
+    async def evaluate_quiz_task(task_id: str, quiz_id: str, responses: Dict[str, str]):
+        try:
+            result = await quiz_generator.evaluate_quiz(quiz_id, responses)
+            active_tasks[task_id] = {
+                "status": "completed",
+                "result": result
+            }
+        except Exception as e:
+            active_tasks[task_id] = {
+                "status": "failed",
+                "error": str(e)
+            }
+
+    background_tasks.add_task(evaluate_quiz_task, task_id, request.quiz_id, request.responses)
+    
+    return QuizResponse(
+        task_id=task_id,
+        status="processing",
+        message="Quiz evaluation in progress"
+    )
+
+@app.get("/evaluation-result/{task_id}", response_model=QuizResult)
+async def get_evaluation_result(task_id: str):
+    """Retrieve the result of a quiz evaluation."""
+    if task_id not in active_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task_info = active_tasks[task_id]
+    
+    if task_info["status"] == "failed":
+        raise HTTPException(
+            status_code=500,
+            detail=f"Task failed: {task_info.get('error', 'Unknown error')}"
+        )
+    
+    if task_info["status"] != "completed":
+        raise HTTPException(
+            status_code=202,
+            detail={"status": task_info["status"], "message": "Task is still processing"}
+        )
+    
+    return QuizResult(**task_info["result"])
+
+@app.get("/student-history")
+async def get_student_history():
+    """Retrieve the student's quiz history."""
+    history = quiz_generator.student.get_quiz_history()
+    return JSONResponse(content=history)
+
+class ResponseSubmitRequest(BaseModel):
+    quiz_id: str
+    responses: Dict[str, str]
+
+class StudentAbility(BaseModel):
+    ability: float
+    level: str
+
+class RoutineRequest(BaseModel):
+    age: int
+    sleep_time: str  # e.g., "22:00"
+    wake_time: str  # e.g., "06:00"
+    study_hours: float
+    exercise_time: float  # in minutes
+    subjects: str  # comma-separated list
+
+class RoutineResponse(BaseModel):
+    task_id: str
+    status: str
+    message: str
+
+class RoutineResult(BaseModel):
+    morning_routine: str
+    study_plan: Dict[str, str]  # Subject -> Schedule
+    exercise: str
+    evening_routine: str
+    productivity_tips: str
+
+@app.get("/subjects")
+async def get_subjects():
+    """Retrieve a list of all available subjects."""
+    subjects = quiz_generator.syllabus.get_subjects()
+    return JSONResponse(content={"subjects": subjects})
+
+@app.get("/student-ability", response_model=StudentAbility)
+async def get_student_ability():
+    """Retrieve the student's current ability and level."""
+    ability = quiz_generator.student.get_ability()
+    level = quiz_generator.student.get_level()
+    return StudentAbility(ability=ability, level=level)
+
+@app.post("/generate-routine", response_model=RoutineResponse)
+async def generate_routine_endpoint(
+    background_tasks: BackgroundTasks,
+    request: RoutineRequest
+):
+    """Generate a routine and return a task ID for tracking."""
+    task_id = str(uuid.uuid4())
+    active_tasks[task_id] = {"status": "processing"}
+
+    async def generate_routine_task(task_id: str, request: RoutineRequest):
+        try:
+            routine = await routine_generator.generate_routine(request)
+            active_tasks[task_id] = {
+                "status": "completed",
+                "result": routine
+            }
+        except Exception as e:
+            active_tasks[task_id] = {
+                "status": "failed",
+                "error": str(e)
+            }
+
+    background_tasks.add_task(generate_routine_task, task_id, request)
+    
+    return RoutineResponse(
+        task_id=task_id,
+        status="processing",
+        message="Routine generation in progress"
+    )
+
+@app.get("/routine-result/{task_id}", response_model=RoutineResult)
+async def get_routine_result(task_id: str):
+    """Retrieve the result of a routine generation task."""
+    if task_id not in active_tasks:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    task_info = active_tasks[task_id]
+    
+    if task_info["status"] == "failed":
+        raise HTTPException(
+            status_code=500,
+            detail=f"Task failed: {task_info.get('error', 'Unknown error')}"
+        )
+    
+    if task_info["status"] != "completed":
+        raise HTTPException(
+            status_code=202,
+            detail={"status": task_info["status"], "message": "Task is still processing"}
+        )
+    
+    return RoutineResult(**task_info["result"])
+
+@app.get("/student-history")
+async def get_student_history():
+    """Retrieve student's quiz history from StudentIRT."""
+    history = student_irt.get_quiz_history()
+    return JSONResponse(content=history)
+
+@app.get("/student-ability")
+async def get_student_ability():
+    """Retrieve student's current ability from StudentIRT."""
+    return JSONResponse(content={
+        "ability": student_irt.get_ability(),
+        "level": student_irt.get_level()
+    })
 # @app.get("/routine/{task_id}", response_model=ProcessingResponse)
 # async def get_routine(task_id: str):
 #     if task_id not in active_tasks:
 #         raise Excep
 
-# Optional: Endpoint to clean up completed tasks
 @app.delete("/cleanup-task/{task_id}")
 async def cleanup_task(task_id: str):
     if task_id in active_tasks:
         del active_tasks[task_id]
         return {"message": f"Task {task_id} cleaned up successfully"}
     raise HTTPException(status_code=404, detail="Task not found")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-# debate route
 
 class DebateRequest(BaseModel):
     topic: str
@@ -468,3 +708,7 @@ def start_debate(request: DebateRequest):
     debate = Debate(topic=request.topic, stance=request.stance, cards=request.cards)
     ai_response = debate.run_debate()
     return {"ai_response": ai_response}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
