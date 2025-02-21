@@ -172,25 +172,19 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
-  quizId        String       @map("quiz_id") @db.Uuid // Foreign key to Quiz
-  questionText  String       @map("question_text") // Question text
-  questionType  QuestionType @map("question_type") // Type of question
-  correctAnswer String       @map("correct_answer") // Correct answer
-  options       Json? // Optional options (JSON)
-  points        Int          @default(1) // Points for the question
-  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
-  topicId       String       @db.Uuid // Foreign key to Topic
-  difficulty    Int          @default(1) // Difficulty level (1 to 10)
-  topic         Topic        @relation(fields: [topicId], references: [id]) // Associated topic
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  quizId        String       @map("quiz_id") @db.Uuid
+  questionText  String       @map("question_text")
+  questionType  QuestionType @map("question_type")
+  correctAnswer String       @map("correct_answer")
+  options       Json?
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  topicId       String       @db.Uuid
+  difficulty    Int          @default(1)
+  topic         Topic        @relation(fields: [topicId], references: [id])
 
-<<<<<<< HEAD
   quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
-=======
-  // Relations
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade) // Associated quiz
->>>>>>> 69c5548587f9fe95ac921fd523bb0a642f76e585
-
   @@map("quiz_questions")
 }
 

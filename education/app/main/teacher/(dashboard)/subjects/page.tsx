@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import { getSubjects } from "@/app/actions/userDbActions";
+import { addTopic, createSubject, getSubjects } from "@/app/actions/topicActions";
 
 export default function ManageCurriculumPage() {
   const router = useRouter();
@@ -12,10 +12,10 @@ export default function ManageCurriculumPage() {
   const [subjectName, setSubjectName] = useState("");
   const [subjectLoading, setSubjectLoading] = useState(false);
 
-  // State for topic form
+  // State for chapter form
   const [topicName, setTopicName] = useState("");
   const [subjectId, setSubjectId] = useState("");
-  const [sequenceNumber, setSequenceNumber] = useState<number | "">(0);
+  const [sequenceNumber, setSequenceNumber] = useState<number | "">(1);
   const [topicLoading, setTopicLoading] = useState(false);
   const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
 
@@ -43,26 +43,21 @@ export default function ManageCurriculumPage() {
 
     setSubjectLoading(true);
     try {
-      const res = await fetch("/api/subjects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: subjectName.trim() }),
-      });
+      const res = await createSubject(subjectName.trim());
 
-      if (!res.ok) throw new Error("Failed to add subject");
-      const newSubject = await res.json();
-      setSubjects([...subjects, newSubject]);
+      if (!res.name) throw new Error("Failed to add subject");
+      setSubjects([...subjects, res]);
       setSubjectName("");
       toast.success("Subject added successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to add subject");
+      toast.error("Failed to add subject: " + error);
     } finally {
       setSubjectLoading(false);
     }
   };
 
-  // Handle topic form submission
+  // Handle chapter form submission
   const handleAddTopic = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!topicName.trim() || !subjectId || sequenceNumber === "") {
@@ -76,24 +71,16 @@ export default function ManageCurriculumPage() {
 
     setTopicLoading(true);
     try {
-      const res = await fetch("/api/topics", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: topicName.trim(),
-          subjectId,
-          sequenceNumber: Number(sequenceNumber),
-        }),
-      });
+      const topic = await addTopic(topicName.trim(), subjectId, Number(sequenceNumber));
 
-      if (!res.ok) throw new Error("Failed to add topic");
+      if (!topic.name) throw new Error("Failed to add chapter");
       setTopicName("");
       setSubjectId("");
       setSequenceNumber(0);
-      toast.success("Topic added successfully");
+      toast.success("Chapter added successfully");
     } catch (error) {
       console.error(error);
-      toast.error("Failed to add topic");
+      toast.error("Failed to add chapter");
     } finally {
       setTopicLoading(false);
     }
@@ -132,9 +119,9 @@ export default function ManageCurriculumPage() {
         </form>
       </div>
 
-      {/* Add Topic Form */}
+      {/* Add Chapter Form */}
       <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold text-gray-700 mb-4">Add New Topic</h2>
+        <h2 className="text-xl font-semibold text-gray-700 mb-4">Add New Chapter</h2>
         <form onSubmit={handleAddTopic} className="space-y-4">
           <div>
             <label htmlFor="subjectId" className="block text-sm font-medium text-gray-600">
@@ -160,14 +147,14 @@ export default function ManageCurriculumPage() {
           </div>
           <div>
             <label htmlFor="topicName" className="block text-sm font-medium text-gray-600">
-              Topic Name
+              Chapter Name
             </label>
             <input
               type="text"
               id="topicName"
               value={topicName}
               onChange={(e) => setTopicName(e.target.value)}
-              placeholder="e.g., Algebra"
+              placeholder="e.g., Sets"
               className="mt-1 w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={topicLoading}
             />
@@ -187,7 +174,7 @@ export default function ManageCurriculumPage() {
               disabled={topicLoading}
             />
             <p className="text-sm text-gray-500 mt-1">
-              Order of the topic within the subject (e.g., 1 for first topic).
+              Order of the chapter within the subject (e.g., 1 for first chapter).
             </p>
           </div>
           <button
@@ -195,7 +182,7 @@ export default function ManageCurriculumPage() {
             className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition disabled:bg-blue-400"
             disabled={topicLoading}
           >
-            {topicLoading ? "Adding..." : "Add Topic"}
+            {topicLoading ? "Adding..." : "Add Chapter"}
           </button>
         </form>
       </div>
