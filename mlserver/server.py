@@ -11,6 +11,7 @@ from lectures import MediaProcessor
 from examPrepAssistant import ExamPrepAssistant
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from debate import Debate
 
 app = FastAPI(title="Media Processing API")
 
@@ -452,3 +453,18 @@ async def cleanup_task(task_id: str):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# debate route
+
+class DebateRequest(BaseModel):
+    topic: str
+    stance: str
+    cards: list[str]
+
+@app.post("/debate")
+def start_debate(request: DebateRequest):
+    if not request.topic or not request.stance or not request.cards:
+        raise HTTPException(status_code=400, detail="Missing required fields")
+    debate = Debate(topic=request.topic, stance=request.stance, cards=request.cards)
+    ai_response = debate.run_debate()
+    return {"ai_response": ai_response}
