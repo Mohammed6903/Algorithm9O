@@ -183,11 +183,8 @@ model QuizQuestion {
   difficulty        Int               @default(1)                                       // Difficulty level (1 to 10)
   topic             Topic             @relation(fields: [topicId], references: [id])    // Associated topic
 
-  // Relations
-  quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)  // Associated quiz
+  quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
-  // Additions: Added topicId to associate questions with topics and difficulty for IRT-based adaptive testing.
-  // Note: Set points = difficulty when creating questions to reflect difficulty in scoring.
   @@map("quiz_questions")
 }
 

@@ -66,3 +66,41 @@ export const getProfileAction = async () => {
         redirect('/main');
     }
 }
+
+export const getSubjects = async() => {
+    try{
+        const subjects = await prisma.subject.findMany();
+        return subjects;
+    } catch (error){
+        console.log('Error getting subjects: ', error);
+        throw error;
+    }
+}
+
+export const createSubject = async(subjectName: string) => {
+    try {
+        const response = await prisma.subject.create({
+            data: {
+                name: subjectName
+            }
+        });
+        return response;
+    } catch (error){
+        console.log("Error inserting subject: ", error);
+        throw error;
+    }
+}
+
+export const deleteSubject = async (id: string) => {
+    try {
+        const response = await prisma.subject.delete({
+            where: {
+                id: id
+            }
+        })
+        return response;
+    } catch (error){
+        console.log("Error inserting subject: ", error);
+        throw error;
+    }
+}

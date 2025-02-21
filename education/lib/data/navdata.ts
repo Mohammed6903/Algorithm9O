@@ -12,8 +12,8 @@ export const teacherNavItems = [
     icon: BarChart2
   },
   {
-    name: 'Live Classes',
-    href: '/main/teacher/live-classes',
+    name: 'Classes',
+    href: '/main/teacher/classes',
     icon: Users
   },
   {
