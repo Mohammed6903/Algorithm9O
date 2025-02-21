@@ -1,4 +1,5 @@
 import { Home, Users, Calendar, BarChart2, Settings, LogOut, Notebook, Clock, CheckCheck } from 'lucide-react';
+import { list } from 'postcss';
 
 export const teacherNavItems = [
   {
@@ -21,6 +22,7 @@ export const teacherNavItems = [
     href: '/main/teacher/classroom',
     icon: Calendar
   },
+ 
 ];
 
 export const studentNavItems = [

@@ -22,7 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode; })
               setIsExpanded={setIsExpanded}
             />
           </div>
-          <div className="flex-grow p-6 md:p-12 overflow-hidden hover:overflow-y-auto">
+          <div className="flex-grow overflow-hidden hover:overflow-y-auto">
             {children}
           </div>
         </div>
