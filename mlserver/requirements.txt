@@ -1,0 +1,31 @@
+aiohappyeyeballs==2.4.3
+aiohttp==3.10.10
+av==11.0.0
+ctranslate2==4.5.0
+dnspython==2.7.0
+fastapi==0.115.2
+fastapi-cli==0.0.5
+faster-whisper==1.0.3
+ffmpeg-python==0.2.0
+google-ai-generativelanguage==0.6.10
+google-generativeai==0.8.3
+httpx==0.27.2
+huggingface-hub==0.26.1
+langchain==0.3.4
+langchain-ollama==0.2.0
+python-multipart
+numba==0.60.0
+ollama==0.3.3
+onnxruntime==1.19.2
+openai-whisper==20240930
+opencv-python==4.10.0.84
+pandas==2.2.2
+pillow
+# torch==2.5.0+cu118
+# torchaudio==2.5.0+cu118
+# torchvision==0.20.0+cu118
+# use below command instead:
+# pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+transformers==4.45.2
+uvicorn==0.32.0
+whisper==1.1.10

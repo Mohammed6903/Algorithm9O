@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyframe Extraction</title>
+</head>
+<body>
+    <h1>Keyframe Extraction</h1>
+    <form id="uploadForm">
+        <label for="videoFile">Upload MP4 Video:</label>
+        <input type="file" id="videoFile" name="videoFile" accept=".mp4" required>
+        <br><br>
+        <label for="analysisFile">Upload JSON Analysis File (optional):</label>
+        <input type="file" id="analysisFile" name="analysisFile" accept=".json">
+        <br><br>
+        <button type="submit">Generate Keyframes</button>
+    </form>
+    <div id="response"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formData = new FormData();
+            const videoFile = document.getElementById('videoFile').files[0];
+            const analysisFile = document.getElementById('analysisFile').files[0];
+
+            // Append files to formData
+            formData.append('file', videoFile);
+            if (analysisFile) {
+                formData.append('analysis', analysisFile);
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/generate-key-images', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error: ${errorText}`);
+                }
+
+                const data = await response.json();
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('response').innerText = `Failed to generate keyframes: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>

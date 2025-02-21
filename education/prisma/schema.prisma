@@ -1,0 +1,228 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Enums
+enum UserRole {
+  student
+  teacher
+}
+
+enum QuestionType {
+  multiple_choice
+  true_false
+  short_answer
+  // @@schema("public")
+}
+
+// Models
+model UserProfile {
+  id        String   @id @db.Uuid
+  fullName  String   @map("full_name")
+  avatarUrl String?  @map("avatar_url")
+  role      UserRole
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  // Relations
+  taughtClasses     Class[]            @relation("TeacherClasses")
+  enrollments       ClassEnrollment[]
+  attendance        ClassAttendance[]
+  uploadedMaterials Material[]
+  createdQuizzes    Quiz[]
+  quizSubmissions   QuizSubmission[]
+  chatHistory       ChatHistory[]
+  progress          StudentProgress[]
+  studyPlans        StudyPlan[]
+
+  // @@schema("public")
+  @@map("user_profiles")
+}
+
+model Class {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  teacherId    String   @map("teacher_id") @db.Uuid
+  title        String
+  description  String?
+  subject      String
+  startTime    DateTime @map("start_time") @db.Timestamptz
+  endTime      DateTime @map("end_time") @db.Timestamptz
+  isLive       Boolean  @default(false) @map("is_live")
+  recordingUrl String?  @map("recording_url")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  // Relations
+  teacher      UserProfile        @relation("TeacherClasses", fields: [teacherId], references: [id])
+  enrollments  ClassEnrollment[]
+  attendance   ClassAttendance[]
+  materials    Material[]
+  quizzes      Quiz[]
+
+  // @@schema("public")
+  @@map("classes")
+}
+
+model ClassEnrollment {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  classId   String   @map("class_id") @db.Uuid
+  studentId String   @map("student_id") @db.Uuid
+  joinedAt  DateTime @default(now()) @map("joined_at") @db.Timestamptz
+
+  // Relations
+  class     Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   UserProfile @relation(fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  // @@schema("public")
+  @@map("class_enrollments")
+}
+
+model ClassAttendance {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  classId        String    @map("class_id") @db.Uuid
+  studentId      String    @map("student_id") @db.Uuid
+  joinTime       DateTime  @map("join_time") @db.Timestamptz
+  leaveTime      DateTime? @map("leave_time") @db.Timestamptz
+  durationMinutes Int?     @map("duration_minutes")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  class    Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student  UserProfile @relation(fields: [studentId], references: [id])
+
+  // @@schema("public")
+  @@map("class_attendance")
+}
+
+model Material {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  classId     String   @map("class_id") @db.Uuid
+  title       String
+  description String?
+  fileUrl     String   @map("file_url")
+  fileType    String   @map("file_type")
+  uploadedBy  String   @map("uploaded_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  class      Class       @relation(fields: [classId], references: [id], onDelete: Cascade)
+  uploader   UserProfile @relation(fields: [uploadedBy], references: [id])
+
+  // @@schema("public")
+  @@map("materials")
+}
+
+model Quiz {
+  id             String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  classId        String    @map("class_id") @db.Uuid
+  title          String
+  description    String?
+  durationMinutes Int?     @map("duration_minutes")
+  isAiGenerated   Boolean  @default(false) @map("is_ai_generated")
+  createdBy      String    @map("created_by") @db.Uuid
+  startTime      DateTime? @map("start_time") @db.Timestamptz
+  endTime        DateTime? @map("end_time") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz
+
+  // Relations
+  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade)
+  creator     UserProfile      @relation(fields: [createdBy], references: [id])
+  questions   QuizQuestion[]
+  submissions QuizSubmission[]
+
+  // @@schema("public")
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  quizId        String       @map("quiz_id") @db.Uuid
+  questionText  String       @map("question_text")
+  questionType  QuestionType @map("question_type")
+  correctAnswer String       @map("correct_answer")
+  options       Json?
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  // @@schema("public")
+  @@map("quiz_questions")
+}
+
+model QuizSubmission {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  quizId      String   @map("quiz_id") @db.Uuid
+  studentId   String   @map("student_id") @db.Uuid
+  score       Float?
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+  answers     Json
+
+  // Relations
+  quiz    Quiz        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student UserProfile @relation(fields: [studentId], references: [id])
+
+  @@unique([quizId, studentId])
+  // @@schema("public")
+  @@map("quiz_submissions")
+}
+
+model ChatHistory {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  message   String
+  isAi      Boolean  @default(false) @map("is_ai")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  // Relations
+  user UserProfile @relation(fields: [userId], references: [id])
+
+  // @@schema("public")
+  @@map("chat_history")
+}
+
+model StudentProgress {
+  id               String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  studentId        String   @map("student_id") @db.Uuid
+  subject          String
+  topic            String
+  proficiencyLevel Int      @map("proficiency_level") @db.Integer
+  lastActivity     DateTime @default(now()) @map("last_activity") @db.Timestamptz
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  // Relations
+  student UserProfile @relation(fields: [studentId], references: [id])
+
+  @@unique([studentId, subject, topic])
+  // @@schema("public")
+  @@map("student_progress")
+}
+
+model StudyPlan {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  studentId   String   @map("student_id") @db.Uuid
+  title       String
+  description String?
+  startDate   DateTime @map("start_date") @db.Date
+  endDate     DateTime @map("end_date") @db.Date
+  subjects    Json
+  goals       Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz
+
+  // Relations
+  student UserProfile @relation(fields: [studentId], references: [id])
+
+  // @@schema("public")
+  @@map("study_plans")
+}
