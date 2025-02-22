@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RadioGroupItem, RadioGroup } from '@/components/ui/radio-group';
 
 // Type definitions for API responses
 interface QuizMetadata {
@@ -33,7 +34,7 @@ interface QuizMetadata {
 interface Question {
   question_id: string;
   text: string;
-  type: 'MCQ' | 'short' | 'long';
+  type: 'MCQ' | 'short' | 'true false';
   options: string[];
   correct_answer: string;
   difficulty: string;
@@ -220,6 +221,73 @@ const QuizPage: React.FC = () => {
       setErrorMessage('Error submitting quiz');
     }
   };
+  
+  const renderQuestionInput = (question: Question) => {
+    switch (question.type) {
+      case 'MCQ':
+        return (
+          <RadioGroup
+            value={responses[question.question_id] || ""}
+            onValueChange={(value) => handleResponseChange(question.question_id, value)}
+            className="mt-2 space-y-2"
+          >
+            {question.options.map((option, idx) => (
+              <div key={idx} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${question.question_id}-${idx}`} />
+                <Label htmlFor={`${question.question_id}-${idx}`} className="cursor-pointer">
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        );
+      
+      case 'true false':
+        return (
+          <RadioGroup
+            value={responses[question.question_id] || ""}
+            onValueChange={(value) => handleResponseChange(question.question_id, value)}
+            className="mt-2 flex space-x-4"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="true" id={`${question.question_id}-true`} />
+              <Label htmlFor={`${question.question_id}-true`} className="cursor-pointer">
+                True
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="false" id={`${question.question_id}-false`} />
+              <Label htmlFor={`${question.question_id}-false`} className="cursor-pointer">
+                False
+              </Label>
+            </div>
+          </RadioGroup>
+        );
+      
+      case 'short':
+        return (
+          <Input
+            type="text"
+            value={responses[question.question_id] || ''}
+            onChange={(e) => handleResponseChange(question.question_id, e.target.value)}
+            placeholder="Enter your answer"
+            className="mt-2"
+          />
+        );
+      
+      default:
+        return null;
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy': return 'text-green-600';
+      case 'medium': return 'text-yellow-600';
+      case 'hard': return 'text-red-600';
+      default: return 'text-gray-600';
+    }
+  };
 
   return (
     <div className="container mx-auto p-4">
@@ -231,22 +299,20 @@ const QuizPage: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Error Alert */}
           {status === 'error' && (
             <Alert variant="warning">
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
 
-          {/* Student Ability */}
-          <div className="mb-4">
-            <Label>Current Ability</Label>
-            <p className="text-sm text-gray-700">
-              Ability Score: {ability.ability.toFixed(2)} | Level: {ability.level}
+          <div className="mb-6 bg-blue-50 p-4 rounded-lg">
+            <Label className="text-blue-700">Current Ability</Label>
+            <p className="text-sm text-blue-600">
+              Ability Score: <span className="font-semibold">{ability.ability.toFixed(2)}</span> | 
+              Level: <span className="font-semibold">{ability.level}</span>
             </p>
           </div>
 
-          {/* Quiz Generation Form */}
           {!quiz && (
             <form onSubmit={handleGenerateQuiz} className="space-y-4">
               <div className="space-y-2">
@@ -275,7 +341,11 @@ const QuizPage: React.FC = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={status === 'processing'}>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={status === 'processing'}
+              >
                 {status === 'processing' ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -288,48 +358,41 @@ const QuizPage: React.FC = () => {
             </form>
           )}
 
-          {/* Quiz Questions */}
           {quiz && (
-            <form onSubmit={handleSubmitQuiz} className="space-y-4">
-              <h3 className="text-lg font-medium">
-                Quiz: {quiz.metadata.subject} - {quiz.metadata.topic || 'General'}
-              </h3>
-              {quiz.questions.map((question) => (
-                <div key={question.question_id} className="p-4 border rounded-lg">
-                  <p className="font-medium">{question.text}</p>
-                  <p className="text-sm text-gray-500">
-                    Type: {question.type} | Difficulty: {question.difficulty} | Marks: {question.marks}
-                  </p>
+            <form onSubmit={handleSubmitQuiz} className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h3 className="text-lg font-medium text-gray-800">
+                  {quiz.metadata.subject} - {quiz.metadata.topic || 'General'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Generated at: {new Date(quiz.metadata.generated_at).toLocaleString()}
+                </p>
+              </div>
 
-                  {question.type === 'MCQ' ? (
-                    <div className="mt-2 space-y-2">
-                      {question.options.map((option, idx) => (
-                        <div key={idx} className="flex items-center">
-                          <input
-                            type="radio"
-                            name={question.question_id}
-                            value={option}
-                            checked={responses[question.question_id] === option}
-                            onChange={(e) => handleResponseChange(question.question_id, e.target.value)}
-                            className="mr-2"
-                          />
-                          <label>{option}</label>
-                        </div>
-                      ))}
+              {quiz.questions.map((question, index) => (
+                <div key={question.question_id} className="bg-white border rounded-lg p-6 shadow-sm">
+                  <div className="flex items-start justify-between mb-4">
+                    <span className="text-sm font-medium text-gray-500">Question {index + 1}</span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-sm font-medium ${getDifficultyColor(question.difficulty)}`}>
+                        {question.difficulty}
+                      </span>
+                      <span className="text-sm text-gray-500">
+                        {question.marks} {question.marks === 1 ? 'mark' : 'marks'}
+                      </span>
                     </div>
-                  ) : (
-                    <Input
-                      type="text"
-                      value={responses[question.question_id] || ''}
-                      onChange={(e) => handleResponseChange(question.question_id, e.target.value)}
-                      placeholder="Enter your answer"
-                      className="mt-2"
-                    />
-                  )}
+                  </div>
+
+                  <p className="text-gray-800 font-medium mb-4">{question.text}</p>
+                  {renderQuestionInput(question)}
                 </div>
               ))}
 
-              <Button type="submit" className="w-full" disabled={status === 'processing'}>
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={status === 'processing'}
+              >
                 {status === 'processing' ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -342,26 +405,38 @@ const QuizPage: React.FC = () => {
             </form>
           )}
 
-          {/* Quiz Result */}
           {result && (
-            <div className="mt-4">
-              <h3 className="text-lg font-medium">Quiz Result</h3>
-              <p>Score: {result.score} / {result.total_marks} ({result.percentage.toFixed(2)}%)</p>
-              <p>Updated Ability: {result.updated_ability.toFixed(2)} ({result.updated_level})</p>
+            <div className="mt-6 bg-green-50 p-6 rounded-lg">
+              <h3 className="text-lg font-medium text-green-800 mb-3">Quiz Result</h3>
+              <div className="space-y-2">
+                <p className="text-green-700">
+                  Score: <span className="font-semibold">{result.score}</span> / {result.total_marks} 
+                  <span className="ml-2">({result.percentage.toFixed(2)}%)</span>
+                </p>
+                <p className="text-green-700">
+                  Updated Ability: <span className="font-semibold">{result.updated_ability.toFixed(2)}</span>
+                  <span className="ml-2">({result.updated_level})</span>
+                </p>
+              </div>
             </div>
           )}
 
-          {/* Quiz History */}
           {Object.keys(history).length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-lg font-medium">Quiz History</h3>
-              {Object.entries(history).map(([quizId, details]) => (
-                <div key={quizId} className="p-2 border-b">
-                  <p>Quiz ID: {quizId}</p>
-                  <p>Score: {details.score} / {details.total_marks}</p>
-                  <p>Timestamp: {details.timestamp}</p>
-                </div>
-              ))}
+            <div className="mt-8">
+              <h3 className="text-lg font-medium text-gray-800 mb-4">Quiz History</h3>
+              <div className="space-y-3">
+                {Object.entries(history).map(([quizId, details]) => (
+                  <div key={quizId} className="bg-gray-50 p-4 rounded-lg">
+                    <p className="text-sm text-gray-600">Quiz ID: {quizId}</p>
+                    <p className="text-sm font-medium">
+                      Score: {details.score} / {details.total_marks}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(details.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </CardContent>

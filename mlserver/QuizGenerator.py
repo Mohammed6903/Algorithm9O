@@ -50,6 +50,110 @@ class StaticSyllabus:
                         "Solve numericals on electromagnetic induction"
                     ]
                 },
+                "Chemistry": {
+                    "content": ["Acids and Bases", "Chemical Reactions", "Oxidation and Reduction"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Identify properties of acids and bases",
+                        "Balance chemical reactions",
+                        "Understand oxidation-reduction processes"
+                    ]
+                },
+                "Biology": {
+                    "content": ["Life Processes", "Control in the Living", "Reproduction in the Living"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Understand human circulatory and respiratory systems",
+                        "Learn about nervous and hormonal control",
+                        "Study different modes of reproduction in living organisms"
+                    ]
+                },
+            },
+            "Social Science": {
+                "History": {
+                    "content": ["Imperialism", "20th Century Age of Conflict", "Emancipation of Asia and Africa"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Analyze the impact of imperialism on global history",
+                        "Understand the causes and effects of world wars",
+                        "Study the movements leading to independence in Asia and Africa"
+                    ]
+                },
+                "Geography": {
+                    "content": ["Physical Features of India", "Climate", "Natural Resources"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Identify major physical features of India",
+                        "Understand the climate patterns and their effects",
+                        "Learn about the distribution and conservation of natural resources"
+                    ]
+                },
+                "Economics": {
+                    "content": ["Development", "Sectors of the Indian Economy", "Money and Credit"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Understand the concept of development and its indicators",
+                        "Analyze the role of different sectors in the economy",
+                        "Learn about the banking system and credit facilities"
+                    ]
+                },
+                "Political Science": {
+                    "content": ["Democracy and Diversity", "Political Parties", "Outcomes of Democracy"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Understand the principles of democracy",
+                        "Study the role and functions of political parties",
+                        "Evaluate the outcomes and challenges of democratic governance"
+                    ]
+                },
+            },
+            "Languages": {
+                "English": {
+                    "content": ["Prose", "Poetry", "Grammar"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Enhance reading comprehension skills",
+                        "Appreciate and analyze poetic expressions",
+                        "Master grammatical structures and usage"
+                    ]
+                },
+                "Marathi": {
+                    "content": ["Prose", "Poetry", "Grammar"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Develop reading and writing skills in Marathi",
+                        "Understand and interpret Marathi literature",
+                        "Apply grammatical rules in writing"
+                    ]
+                },
+                "Hindi": {
+                    "content": ["Prose", "Poetry", "Grammar"],
+                    "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                    "weightage": 25,
+                    "learning_objectives": [
+                        "Improve proficiency in reading and writing Hindi",
+                        "Analyze Hindi literary works",
+                        "Grasp and use Hindi grammar effectively"
+                    ]
+                },
+            },
+            "Information Technology": {
+                "content": ["ICT in Daily Life", "Digital Literacy", "Cyber Safety"],
+                "difficulty_levels": {"basic": 1, "intermediate": 2, "advanced": 3},
+                "weightage": 25,
+                "learning_objectives": [
+                    "Understand the role of ICT in modern society",
+                    "Develop skills in using digital tools and platforms",
+                    "Learn about online safety and responsible internet usage"
+                ]
             },
         }
 
@@ -61,7 +165,7 @@ class StaticSyllabus:
         return list(self.syllabus.keys())
 
     def generate_ai_prompt(self, student_level: str, subject: str, topic: str = None) -> str:
-        base_prompt = f"Generate SSC Maharashtra Class 10 level questions for {subject}. Focus more on tricky MCQs, Short answer questions, True False Questions."
+        base_prompt = f"Generate SSC Maharashtra Class 10 level questions for {subject}. Focus more on tricky MCQs, True False Questions."
         if topic:
             base_prompt += f" topic: {topic}"
             
@@ -88,7 +192,7 @@ class StaticSyllabus:
         {base_prompt}. Student level: {student_level}.
         {syllabus_snippet}
         Follow these guidelines:
-        - Include multiple question types (MCQs, short answer, true false)
+        - Include multiple question types (MCQs, true false)
         - Mark scheme with step-by-step solutions
         - Difficulty progression within the quiz
         - Align with SSC Maharashtra board patterns
