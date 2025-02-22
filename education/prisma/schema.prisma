@@ -29,6 +29,7 @@ model UserProfile {
   role      UserRole // Role (student or teacher)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
+  interests String[] @default([]) // Add interests as an array of strings
 
   // Relations
   taughtClasses     Class[]           @relation("TeacherClasses") // Classes taught by the teacher
@@ -41,6 +42,7 @@ model UserProfile {
   progress          StudentProgress[] // Student's progress per topic
   studyPlans        StudyPlan[] // Study plans created by the student
   Debate            Debate[]
+  Engagement        Engagement[]
 
   @@map("user_profiles")
 }
@@ -69,6 +71,7 @@ model Topic {
   progress        StudentProgress[] // Student progress for this topic
   studyPlanTopics StudyPlanTopic[] // Study plans including this topic
   Material        Material[]
+  classes         ClassTopic[]
 
   // Purpose: Represents topics within subjects, enables content recommendations based on sequence, and associates questions and progress.
   @@map("topics")
@@ -78,6 +81,7 @@ model Class {
   id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
   teacherId    String   @map("teacher_id") @db.Uuid // Foreign key to UserProfile (teacher)
   title        String // Class title
+  name         String
   description  String? // Optional description
   subjectId    String   @db.Uuid // Foreign key to Subject (replaces subject string)
   startTime    DateTime @map("start_time") @db.Timestamptz // Class start time
@@ -94,6 +98,7 @@ model Class {
   attendance  ClassAttendance[] // Attendance records
   materials   Material[] // Materials for this class
   quizzes     Quiz[] // Quizzes for this class
+  ClassTopic  ClassTopic[]
 
   // Modification: Replaced subject String with subjectId to reference Subject model for better structure.
   @@map("classes")
@@ -241,19 +246,18 @@ model StudentProgress {
 }
 
 model StudyPlan {
-  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
-  studentId   String   @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
-  title       String // Study plan title
-  description String? // Optional description
-  startDate   DateTime @map("start_date") @db.Date // Start date
-  endDate     DateTime @map("end_date") @db.Date // End date
-  goals       Json? // Optional goals (JSON)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
-  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
+  id              String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
+  studentId       String           @map("student_id") @db.Uuid // Foreign key to UserProfile (student)
+  title           String // Study plan title
+  description     String? // Optional description
+  startDate       DateTime         @map("start_date") @db.Date // Start date
+  endDate         DateTime         @map("end_date") @db.Date // End date
+  goals           Json? // Optional goals (JSON)
+  studyPlanTopics StudyPlanTopic[] @relation("StudyPlanToStudyPlanTopic") // Explicit relation name  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
+  updatedAt       DateTime         @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  student         UserProfile      @relation(fields: [studentId], references: [id]) // Associated student
-  studyPlanTopics StudyPlanTopic[] // Topics included in the study plan
+  student UserProfile @relation(fields: [studentId], references: [id]) // Associated student
 
   // Modification: Removed subjects Json and added relation to StudyPlanTopic for better structure.
   // Purpose: Defines study plans with associated topics for generating daily schedules.
@@ -265,7 +269,7 @@ model StudyPlanTopic {
   topicId     String @db.Uuid // Foreign key to Topic
 
   // Relations
-  studyPlan StudyPlan @relation(fields: [studyPlanId], references: [id]) // Associated study plan
+  studyPlan StudyPlan @relation("StudyPlanToStudyPlanTopic", fields: [studyPlanId], references: [id]) // Matching relation name
   topic     Topic     @relation(fields: [topicId], references: [id]) // Associated topic
 
   @@id([studyPlanId, topicId])
@@ -275,12 +279,65 @@ model StudyPlanTopic {
 
 //debate
 model Debate {
-  id        String      @id @default(uuid())
-  studentId String      @map("student_id") @db.Uuid
-  student   UserProfile @relation(fields: [studentId], references: [id]) // Associated student
+  id         String      @id @default(uuid())
+  studentId  String      @map("student_id") @db.Uuid
+  student    UserProfile @relation(fields: [studentId], references: [id]) // Associated student
   topic      String
   stance     String
   cards      String[]
   aiResponse String?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime    @default(now())
 }
+
+model Engagement {
+  id              String      @id @default(uuid())
+  studentId       String      @map("student_id") @db.Uuid
+  student         UserProfile @relation(fields: [studentId], references: [id]) // Associated student
+  topic           String
+  timeSpent       Int
+  engagementScore Int
+  interactions    String[]
+  createdAt       DateTime    @default(now()) @db.Timestamptz
+}
+
+// model Engagement {
+//   id             String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+//   studentId      String   @db.Uuid
+//   student        UserProfile @relation(fields: [studentId], references: [id])
+//   topic          String
+//   timeSpent      Int
+//   engagementScore Int
+//   interactions   String[]
+//   createdAt      DateTime @default(now()) @db.Timestamptz
+// }
+model ClassTopic {
+  classId String @db.Uuid // Explicitly set to UUID to match Class.id
+  topicId String @db.Uuid // Assuming Topic.id is also UUID
+  class   Class  @relation(fields: [classId], references: [id])
+  topic   Topic  @relation(fields: [topicId], references: [id])
+
+  @@id([classId, topicId])
+}
+
+// model Material {
+//   id        String  @id
+//   classId   String
+//   topicId   String?
+//   class     Class   @relation(fields: [classId], references: [id])
+//   topic     Topic?  @relation(fields: [topicId], references: [id])
+// }
+
+// model StudyPlan {
+//   id             String          @id
+//   studentId      String
+//   student        User            @relation(fields: [studentId], references: [id])
+//   studyPlanTopics StudyPlanTopic[]
+// }
+
+// model StudyPlanTopic {
+//   id          String    @id @default(uuid())
+//   studyPlanId String
+//   topicId     String
+//   studyPlan   StudyPlan @relation(fields: [studyPlanId], references: [id])
+//   topic       Topic     @relation(fields: [topicId], references: [id])
+// }

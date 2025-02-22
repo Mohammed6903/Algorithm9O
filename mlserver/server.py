@@ -12,6 +12,9 @@ from examPrepAssistant import ExamPrepAssistant
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from debate import Debate
+from typing import List, Dict, Optional
+from micro_goals import MicroGoalOptimizer
+
 
 app = FastAPI(title="Media Processing API")
 
@@ -450,21 +453,67 @@ async def cleanup_task(task_id: str):
         return {"message": f"Task {task_id} cleaned up successfully"}
     raise HTTPException(status_code=404, detail="Task not found")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 # debate route
 
 class DebateRequest(BaseModel):
     topic: str
     stance: str
-    cards: list[str]
+    cards: List[str]
+    user_input: Optional[str] = None  # Optional for ongoing turns
+    action: Optional[str] = None  # "start", "continue", or "end"
+
+class DebateResponse(BaseModel):
+    ai_response: Optional[str] = None
+    review: Optional[str] = None
+    scorecard: Optional[Dict] = None
+    suggestions: Optional[List[str]] = None
 
 @app.post("/debate")
-def start_debate(request: DebateRequest):
+def handle_debate(request: DebateRequest) -> DebateResponse:
     if not request.topic or not request.stance or not request.cards:
         raise HTTPException(status_code=400, detail="Missing required fields")
-    debate = Debate(topic=request.topic, stance=request.stance, cards=request.cards)
-    ai_response = debate.run_debate()
-    return {"ai_response": ai_response}
+
+    # Load existing debate history from Supabase (simplified; implement based on debate ID)
+    debate_id = "example-debate-id"  # Replace with actual ID from frontend or database
+    debate_history = []  # Fetch from Supabase or pass in request if stored client-side
+
+    debate = Debate(topic=request.topic, stance=request.stance, cards=request.cards, debate_history=debate_history)
+
+    if request.action == "end":
+        result = debate.end_debate()
+        return DebateResponse(
+            review=result["review"],
+            scorecard=result["scorecard"],
+            suggestions=result["suggestions"]
+        )
+    else:
+        ai_response = debate.run_debate(request.user_input)
+        return DebateResponse(ai_response=ai_response)
+    
+# micro goals
+
+
+class MicroGoalRequest(BaseModel):
+    learning_objective: str
+    interests: List[str] = None
+    engagement_data: List[Dict] = None
+
+class MicroGoalResponse(BaseModel):
+    micro_goals: List[Dict]
+    suggestions: List[str]
+    progress: float
+
+@app.post("/micro-goals")
+def get_micro_goals(request: MicroGoalRequest) -> MicroGoalResponse:
+    optimizer = MicroGoalOptimizer(
+        request.learning_objective,
+        request.interests or ["coding"],  # Default to 'coding' for your use case
+        request.engagement_data or []
+    )
+    result = optimizer.generate_micro_goals()
+    return MicroGoalResponse(**result)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

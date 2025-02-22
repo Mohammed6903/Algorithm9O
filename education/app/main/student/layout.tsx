@@ -3,6 +3,7 @@ import SideNav from '@/components/ui/dashboard/sidenav';
 import { useState } from 'react';
 import clsx from 'clsx';
 import '../../globals.css';
+import Tutor from '@/components/Tutor';
 
 export default function RootLayout({ children }: { children: React.ReactNode; }) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode; })
             />
           </div>
           <div className="flex-grow overflow-hidden hover:overflow-y-auto">
+            <Tutor />
             {children}
           </div>
         </div>

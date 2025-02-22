@@ -44,11 +44,11 @@ export const studentNavItems = [
     href: '/main/student/guidance',
     icon: Calendar
   },
-  {
-    name:'Lecture',
-    href:'/main/student/Lecture',
-    icon: Notebook
-  },
+  // {
+  //   name:'Goals',
+  //   href:'/main/student/Goals',
+  //   icon: Notebook
+  // },
   {
     name:'Routine',
     href:'/main/student/Routine',
