@@ -97,9 +97,7 @@ model Class {
   enrollments ClassEnrollment[] // Enrollments in this class
   attendance  ClassAttendance[] // Attendance records
   materials   Material[] // Materials for this class
-  quizzes     Quiz[] // Quizzes for this class
-  ClassTopic  ClassTopic[]
-
+  // quizzes     Quiz[] // Quizzes for this class
   // Modification: Replaced subject String with subjectId to reference Subject model for better structure.
   @@map("classes")
 }
@@ -156,7 +154,7 @@ model Material {
 
 model Quiz {
   id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
-  classId         String    @map("class_id") @db.Uuid // Foreign key to Class
+  // classId         String?    @map("class_id") @db.Uuid // Foreign key to Class
   title           String // Quiz title
   description     String? // Optional description
   durationMinutes Int?      @map("duration_minutes") // Optional duration in minutes
@@ -168,7 +166,7 @@ model Quiz {
   updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz // Last update timestamp
 
   // Relations
-  class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
+  // class       Class            @relation(fields: [classId], references: [id], onDelete: Cascade) // Associated class
   creator     UserProfile      @relation(fields: [createdBy], references: [id]) // Quiz creator
   questions   QuizQuestion[] // Questions in the quiz
   submissions QuizSubmission[] // Submissions for the quiz
@@ -177,23 +175,19 @@ model Quiz {
 }
 
 model QuizQuestion {
-  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid // Unique identifier
-  quizId        String       @map("quiz_id") @db.Uuid // Foreign key to Quiz
-  questionText  String       @map("question_text") // Question text
-  questionType  QuestionType @map("question_type") // Type of question
-  correctAnswer String       @map("correct_answer") // Correct answer
-  options       Json? // Optional options (JSON)
-  points        Int          @default(1) // Points for the question
-  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz // Creation timestamp
-  topicId       String       @db.Uuid // Foreign key to Topic
-  difficulty    Int          @default(1) // Difficulty level (1 to 10)
-  topic         Topic        @relation(fields: [topicId], references: [id]) // Associated topic
+  id            String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  quizId        String       @map("quiz_id") @db.Uuid
+  questionText  String       @map("question_text")
+  questionType  QuestionType @map("question_type")
+  correctAnswer String       @map("correct_answer")
+  options       Json?
+  points        Int          @default(1)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  topicId       String       @db.Uuid
+  difficulty    Int          @default(1)
+  topic         Topic        @relation(fields: [topicId], references: [id])
 
-  // Relations
-  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade) // Associated quiz
-
-  // Additions: Added topicId to associate questions with topics and difficulty for IRT-based adaptive testing.
-  // Note: Set points = difficulty when creating questions to reflect difficulty in scoring.
+  quiz              Quiz              @relation(fields: [quizId], references: [id], onDelete: Cascade)
   @@map("quiz_questions")
 }
 
@@ -313,7 +307,7 @@ model Engagement {
 model ClassTopic {
   classId String @db.Uuid // Explicitly set to UUID to match Class.id
   topicId String @db.Uuid // Assuming Topic.id is also UUID
-  class   Class  @relation(fields: [classId], references: [id])
+  // class   Class  @relation(fields: [classId], references: [id])
   topic   Topic  @relation(fields: [topicId], references: [id])
 
   @@id([classId, topicId])

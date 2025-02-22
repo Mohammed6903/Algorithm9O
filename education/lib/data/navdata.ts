@@ -1,4 +1,5 @@
-import { Home, Users, Calendar, BarChart2, Settings, LogOut, Notebook, Clock, CheckCheck } from 'lucide-react';
+import { Home, Users, Calendar, BarChart2, Settings, LogOut, Notebook, Clock, CheckCheck, LucideTableProperties, LucideListChecks } from 'lucide-react';
+import { list } from 'postcss';
 
 export const teacherNavItems = [
   {
@@ -12,8 +13,8 @@ export const teacherNavItems = [
     icon: BarChart2
   },
   {
-    name: 'Live Classes',
-    href: '/main/teacher/live-classes',
+    name: 'Subjects',
+    href: '/main/teacher/subjects',
     icon: Users
   },
   {
@@ -21,6 +22,7 @@ export const teacherNavItems = [
     href: '/main/teacher/classroom',
     icon: Calendar
   },
+ 
 ];
 
 export const studentNavItems = [
@@ -30,29 +32,29 @@ export const studentNavItems = [
     icon: Home
   },
   {
-    name: 'Classes',
+    name: 'Summary',
     href: '/main/student/classes',
-    icon: BarChart2
+    icon: LucideTableProperties
   },
   {
-    name: 'Classroom',
-    href: '/main/student/classroom',
-    icon: Users
+    name: 'Classes',
+    href: '/main/student/summary',
+    icon: BarChart2
   },
   {
     name: 'Guidance',
     href: '/main/student/guidance',
     icon: Calendar
   },
-  // {
-  //   name:'Goals',
-  //   href:'/main/student/Goals',
-  //   icon: Notebook
-  // },
   {
     name:'Routine',
     href:'/main/student/Routine',
     icon: Clock
+  },
+  {
+    name:'Quiz',
+    href:'/main/student/quiz',
+    icon: LucideListChecks
   },
   {
     name:'Debate',
